@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { CourseModule } from './course-module.entity';
 
 @Entity('courses')
 export class Course {
@@ -19,6 +20,9 @@ export class Course {
 
   @Column({ default: true })
   isPublished: boolean;
+
+  @OneToMany(() => CourseModule, (m) => m.course)
+  modules: CourseModule[];
 
   @CreateDateColumn()
   createdAt: Date;

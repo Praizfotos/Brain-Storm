@@ -11,7 +11,7 @@ export class User {
   @Column({ unique: true, nullable: true })
   username: string;
 
-  @Column({ nullable: true })
+  @Column()
   passwordHash: string;
 
   @Column({ nullable: true })
@@ -21,15 +21,19 @@ export class User {
   bio: string;
 
   @Column({ nullable: true })
-  googleId: string;
-
-  @Column({ nullable: true })
   stellarPublicKey: string;
 
   @Column({ default: 'student' })
   role: string;
 
   @Column({ default: false })
+  isBanned: boolean;
+
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ nullable: true })
+  deletedAt: Date;
   isVerified: boolean;
 
   @Column({ nullable: true, type: 'varchar' })

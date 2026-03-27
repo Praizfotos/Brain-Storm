@@ -1,10 +1,14 @@
 'use client';
 
 import { useTheme } from 'next-themes';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const t = useTranslations('nav');
+  const [mounted, setMounted] = useState(false);
+
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch — only render after mount
@@ -16,6 +20,10 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-label={isDark ? t('switchLight') : t('switchDark')}
+      className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      {isDark ? (
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
     >

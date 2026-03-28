@@ -110,3 +110,22 @@ jobs:
 
       - name: cargo clippy
         run: cargo clippy -- -D warnings
+
+  load-tests:
+    name: Load Tests — k6
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Run load tests
+        run: |
+          ./scripts/load-test.sh
+        env:
+          API_URL: http://localhost:3000
+        continue-on-error: true

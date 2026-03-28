@@ -11,9 +11,13 @@
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "dev:backend": "npm run start:dev --workspace=apps/backend",
     "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces"
+    "test": "npm run test --workspaces",
+    "test:load": "./scripts/load-test.sh"
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "k6": "^0.50.0"
   }
 }

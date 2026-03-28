@@ -31,6 +31,71 @@ jobs:
         run: npx jest --coverage --passWithNoTests
         working-directory: apps/backend
 
+  backend-integration-test:
+    name: Backend — Integration Tests (PostgreSQL)
+    runs-on: ubuntu-latest
+
+    services:
+      docker:
+        image: docker:latest
+        options: --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run integration tests
+        run: npm run test:integration --workspace=apps/backend
+        env:
+          NODE_ENV: test
+
+  backend-soroban-test:
+    name: Backend — Soroban Testnet Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install Stellar CLI
+        run: |
+          curl -sSL https://github.com/stellar/stellar-cli/releases/download/v21.5.0/stellar-cli-21.5.0-x86_64-unknown-linux-gnu.tar.gz | tar xz
+          sudo mv stellar /usr/local/bin/
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build contracts
+        run: ./scripts/build.sh
+
+      - name: Run Soroban tests
+        run: npx jest --testPathPattern='soroban-spec' --runInBand
+        working-directory: apps/backend
+        env:
+          CI: 'true'
+          STELLAR_SECRET_KEY: ${{ secrets.STELLAR_SECRET_KEY }}
+
   frontend-build:
     name: Frontend — Install · Build
     runs-on: ubuntu-latest

@@ -26,6 +26,7 @@ export const validationSchema = Joi.object({
   ANALYTICS_CONTRACT_ID: Joi.string().allow('').default(''),
   TOKEN_CONTRACT_ID: Joi.string().allow('').default(''),
   INDEXER_POLL_INTERVAL_MS: Joi.number().default(5000),
+  STELLAR_WEB_AUTH_DOMAIN: Joi.string().default('localhost'),
 
   // Mail
   EMAIL_HOST: Joi.string().required(),

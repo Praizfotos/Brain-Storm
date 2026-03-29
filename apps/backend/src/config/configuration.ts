@@ -26,6 +26,7 @@ export default () => ({
     analyticsContractId: process.env.ANALYTICS_CONTRACT_ID || '',
     tokenContractId: process.env.TOKEN_CONTRACT_ID || '',
     indexerPollIntervalMs: parseInt(process.env.INDEXER_POLL_INTERVAL_MS || '5000', 10),
+    webAuthDomain: process.env.STELLAR_WEB_AUTH_DOMAIN || 'localhost',
   },
 
   mail: {

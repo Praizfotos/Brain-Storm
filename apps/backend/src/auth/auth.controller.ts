@@ -2,6 +2,7 @@ import { Body, Controller, Get, Post, Query, UseGuards, Request } from '@nestjs/
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
+import { StellarAuthService } from './stellar-auth.service';
 import { GoogleAuthGuard } from './google-auth.guard';
 import { GoogleProfile } from './google.strategy';
 import { IsEmail, IsString, MinLength, IsOptional } from 'class-validator';
@@ -40,7 +41,26 @@ class RefreshDto {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private stellarAuthService: StellarAuthService,
+  ) {}
+
+  @Get('stellar')
+  @ApiOperation({ summary: 'SEP-0010: get challenge transaction' })
+  @ApiResponse({ status: 200, description: 'Returns unsigned challenge XDR and network passphrase' })
+  stellarChallenge(@Query('account') account: string) {
+    return this.stellarAuthService.buildChallenge(account);
+  }
+
+  @Post('stellar')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'SEP-0010: verify signed challenge and receive JWT' })
+  @ApiResponse({ status: 201, description: 'Returns access_token' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired challenge' })
+  stellarVerify(@Body('transaction') transaction: string) {
+    return this.stellarAuthService.verifyChallenge(transaction);
+  }
 
   @Post('register')
   @Throttle({ default: { limit: 5, ttl: 60000 } })

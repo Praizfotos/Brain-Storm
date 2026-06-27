@@ -8,9 +8,10 @@ import { ModulesService } from './modules.service';
 import { LessonsService } from './lessons.service';
 import { CoursesController } from './courses.controller';
 import { ModulesController } from './modules.controller';
+import { RepositoriesModule } from '../repositories/repositories.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Course, CourseModule, Lesson])],
+  imports: [TypeOrmModule.forFeature([Course, CourseModule, Lesson]), RepositoriesModule],
   providers: [CoursesService, ModulesService, LessonsService],
   controllers: [CoursesController, ModulesController],
   exports: [CoursesService],

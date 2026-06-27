@@ -1,13 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject } from '@nestjs/common';
 import { Course } from './course.entity';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CourseQueryDto } from './dto/course-query.dto';
+import { CoursesRepository } from '../repositories/courses-repository.interface';
+import { COURSES_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 
 @Injectable()
 export class CoursesService {
@@ -15,51 +14,28 @@ export class CoursesService {
   private readonly CACHE_TTL = 60;
 
   constructor(
-    @InjectRepository(Course) private repo: Repository<Course>,
+    @Inject(COURSES_REPOSITORY_TOKEN) private repo: CoursesRepository,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async findAll(query: CourseQueryDto = {}) {
-    const { search, level, page = 1, limit = 20 } = query;
-
-    const qb = this.repo.createQueryBuilder('course')
-      .where('course.isPublished = :isPublished', { isPublished: true })
-      .andWhere('course.isDeleted = :isDeleted', { isDeleted: false });
-
-    if (search) {
-      qb.andWhere(
-        '(course.title ILIKE :search OR course.description ILIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    if (level) {
-      qb.andWhere('course.level = :level', { level });
-    }
-
-    const offset = (page - 1) * limit;
-    qb.skip(offset).take(limit).orderBy('course.createdAt', 'DESC');
-
-    const [data, total] = await qb.getManyAndCount();
-
-    return { data, total, page, limit };
+    return this.repo.findAll(query);
   }
 
   async findOne(id: string): Promise<Course> {
-    const course = await this.repo.findOne({ where: { id, isDeleted: false } });
+    const course = await this.repo.findById(id);
     if (!course) throw new NotFoundException('Course not found');
     return course;
   }
 
   async create(data: Partial<Course>) {
-    const course = await this.repo.save(this.repo.create(data));
+    const course = await this.repo.save(data);
     await this.invalidateCache();
     return course;
   }
 
   async update(id: string, data: Partial<Course>) {
     const course = await this.findOne(id);
-    if (!course) throw new NotFoundException('Course not found');
     const updated = await this.repo.save({ ...course, ...data });
     await this.invalidateCache();
     return updated;
@@ -67,7 +43,6 @@ export class CoursesService {
 
   async delete(id: string) {
     const course = await this.findOne(id);
-    if (!course) throw new NotFoundException('Course not found');
     const removed = await this.repo.remove(course);
     await this.invalidateCache();
     return removed;

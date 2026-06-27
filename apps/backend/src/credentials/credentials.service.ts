@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Inject } from '@nestjs/common';
 import { Credential } from './credential.entity';
 import { StellarService } from '../stellar/stellar.service';
+import { CredentialsRepository } from '../repositories/credentials-repository.interface';
+import { CREDENTIALS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 
 @Injectable()
 export class CredentialsService {
   constructor(
-    @InjectRepository(Credential) private repo: Repository<Credential>,
+    @Inject(CREDENTIALS_REPOSITORY_TOKEN) private repo: CredentialsRepository,
     private stellarService: StellarService,
   ) {}
 
   async issue(userId: string, courseId: string, stellarPublicKey: string): Promise<Credential> {
     // Avoid duplicate credentials
-    const existing = await this.repo.findOne({ where: { userId, courseId } });
+    const existing = await this.repo.findByUserAndCourse(userId, courseId);
     if (existing) return existing;
 
     const txHash = await this.stellarService.issueCredential(stellarPublicKey, courseId);
@@ -25,8 +25,7 @@ export class CredentialsService {
       // Non-fatal
     }
 
-    const credential = this.repo.create({ userId, courseId, txHash, stellarPublicKey });
-    return this.repo.save(credential);
+    return this.repo.save({ userId, courseId, txHash, stellarPublicKey });
   }
 
   findByUser(userId: string) {
@@ -34,7 +33,7 @@ export class CredentialsService {
   }
 
   async verify(txHash: string) {
-    const credential = await this.repo.findOne({ where: { txHash } });
+    const credential = await this.repo.findByTxHash(txHash);
     const onChain = await this.stellarService.verifyCredential(txHash);
     return { credential, ...onChain };
   }

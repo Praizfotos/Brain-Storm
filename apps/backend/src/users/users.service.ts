@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { User } from './user.entity';
+import { UsersRepository } from '../repositories/users-repository.interface';
+import { USERS_REPOSITORY_TOKEN } from '../repositories/repositories.module';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private repo: Repository<User>) {}
+  constructor(@Inject(USERS_REPOSITORY_TOKEN) private repo: UsersRepository) {}
 
   findByEmail(email: string) {
     return this.repo.findOne({ where: { email } });
@@ -36,39 +36,7 @@ export class UsersService {
     isVerified?: boolean;
     search?: string;
   } = {}) {
-    const { page = 1, limit = 10, role, isVerified, search } = options;
-    
-    const query = this.repo.createQueryBuilder('user');
-    
-    if (role) {
-      query.andWhere('user.role = :role', { role });
-    }
-    
-    if (isVerified !== undefined) {
-      query.andWhere('user.isVerified = :isVerified', { isVerified });
-    }
-    
-    if (search) {
-      query.andWhere('user.email ILIKE :search', { search: `%${search}%` });
-    }
-    
-    query.andWhere('user.deletedAt IS NULL');
-    
-    const [users, total] = await query
-      .skip((page - 1) * limit)
-      .take(limit)
-      .orderBy('user.createdAt', 'DESC')
-      .getManyAndCount();
-    
-    return {
-      data: users,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return this.repo.findAll(options);
   }
 
   async banUser(id: string, isBanned: boolean) {
